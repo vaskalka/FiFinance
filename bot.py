@@ -1,11 +1,13 @@
 import asyncio
 import random
 import json
+from contextlib import suppress
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandObject, CommandStart
 from aiogram.enums.dice_emoji import DiceEmoji
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
+from aiogram.exceptions import TelegramBadRequest
 
 import keyboards
 
@@ -20,6 +22,11 @@ bot_api_token = auth_data["API_TOKEN"]
 bot = Bot(bot_api_token, parse_mode="HTML")
 dp = Dispatcher()
 
+smiles = [
+    ["🥑", "Я люблю авокадо!"],
+    ["🍓", "Ммм, вкусна!"],
+    ["☁️", "Витаю в облаках!"]
+]
 
 @dp.message(CommandStart())
 async def start(message: Message):
@@ -43,6 +50,22 @@ async def play_games(message: Message):
     await message.answer_dice(DiceEmoji.DICE)
 
 
+@dp.callback_query(keyboards.Pagination.filter(F.action.in_(["prev", "next"])))
+async def pagination_handler(call: CallbackQuery, callback_data: keyboards.Pagination):
+    page_num = int(callback_data.page)
+    page = page_num - 1 if page_num > 1 else 0
+
+    if callback_data.action == "next":
+        page = page_num + 1 if page_num < (len(smiles) - 1) else page_num
+
+    with suppress(TelegramBadRequest):
+        await call.message.edit_text(
+            f"{smiles[page][0]} <b>{smiles[page][1]}</b>",
+            reply_markup=keyboards.paginator(page)
+        )
+    await call.answer("Смотри на текст! ;)", True)
+
+
 @dp.message()
 async def echo(message: Message):
     msg = message.text.lower()
@@ -53,6 +76,8 @@ async def echo(message: Message):
         await message.answer("Спец. кнопки", reply_markup=keyboards.spec_kb)
     elif msg == "калькулятор":
         await message.answer("Введите выражение:", reply_markup=keyboards.calc_kb())
+    elif msg == "смайлики":
+        await message.answer(f"{smiles[0][0]} <b>{smiles[0][1]}</b>", reply_markup=keyboards.paginator())
 
 
 async def main():

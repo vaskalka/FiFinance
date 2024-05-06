@@ -5,7 +5,9 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     KeyboardButtonPollType
 )
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from aiogram.utils.keyboard import ReplyKeyboardBuilder, InlineKeyboardBuilder
+from aiogram.filters.callback_data import CallbackData
+
 
 main_kb = ReplyKeyboardMarkup(
     keyboard=[
@@ -47,6 +49,21 @@ spec_kb = ReplyKeyboardMarkup(
     ],
     resize_keyboard=True
 )
+
+
+class Pagination(CallbackData, prefix="pagi"):
+    action: str
+    page: int
+
+
+def paginator(page: int=0):
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="<---", callback_data=Pagination(action="prev", page=page).pack()),
+        InlineKeyboardButton(text="--->", callback_data=Pagination(action="next", page=page).pack()),
+        width=2
+    )
+    return builder.as_markup()
 
 
 def calc_kb():
