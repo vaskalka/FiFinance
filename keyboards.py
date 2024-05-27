@@ -12,6 +12,9 @@ from aiogram.filters.callback_data import CallbackData
 main_kb = ReplyKeyboardMarkup(
     keyboard=[
         [
+            KeyboardButton(text="калории")
+        ],
+        [
             KeyboardButton(text="Смайлики"),
             KeyboardButton(text="Ссылки")
 
